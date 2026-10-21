@@ -693,20 +693,6 @@ $msg = $_GET['msg'] ?? '';
             display: grid; place-items: center;
             color: #fff; font-size: 12px; font-weight: 600;
         }
-
-        /* ---------- ACTIVITY FEED ---------- */
-        .activity-list { list-style: none; margin: 0; padding: 4px 0; }
-        .activity-list li { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
-        .activity-list li:last-child { border-bottom: none; }
-        .activity-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; font-size: 14px; flex: 0 0 auto; }
-        .activity-text { font-size: 13.5px; color: var(--text); }
-        .activity-time { font-size: 11.5px; color: var(--text-subtle); margin-top: 1px; }
-
-        /* ---------- EMPTY STATE ---------- */
-        .empty-state { text-align: center; padding: 44px 20px; color: var(--text-muted); }
-        .empty-state i { font-size: 28px; display: block; margin-bottom: 10px; color: var(--text-subtle); }
-        .empty-state p { margin: 0; font-size: 13.5px; }
-        .empty-state a { color: var(--brand); font-weight: 500; text-decoration: none; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -770,6 +756,53 @@ $msg = $_GET['msg'] ?? '';
                     $totalUsers = $pdo->query("SELECT COUNT(*) FROM TBUsers")->fetchColumn();
                     $totalLib   = $pdo->query("SELECT COUNT(*) FROM TBLibrary")->fetchColumn();
 
+                    // --- Generate EXACTLY 12 months for the chart (Rolling 12 months) ---
+                    $labels = [];
+                    $monthMap = [];
+                    for ($i = 11; $i >= 0; $i--) {
+                        $timestamp = strtotime("first day of -$i month");
+                        $labels[] = date('M Y', $timestamp);
+                        $monthMap[date('Y-m', $timestamp)] = 11 - $i;
+                    }
+
+                    // --- Fetch Playtime Data filtered for the last 12 months ---
+                    $chartQuery = $pdo->query("
+                        SELECT g.Title, DATE_FORMAT(l.AcquiredDate, '%Y-%m') AS MonthSort, SUM(l.PlaytimeHours) AS Playtime
+                        FROM TBLibrary l
+                        JOIN TBGames g ON l.GameID = g.GameID
+                        WHERE l.AcquiredDate >= DATE_FORMAT(DATE_SUB(CURRENT_DATE, INTERVAL 11 MONTH), '%Y-%m-01')
+                        GROUP BY g.Title, MonthSort
+                    ")->fetchAll();
+
+                    $gamesData = [];
+                    foreach ($chartQuery as $row) {
+                        $title = $row['Title'];
+                        $key = $row['MonthSort'];
+                        
+                        // Initialize array of 12 zeros if the game doesn't exist yet
+                        if (!isset($gamesData[$title])) {
+                            $gamesData[$title] = array_fill(0, 12, 0); 
+                        }
+                        
+                        // Map the database value to the correct month index (0 to 11)
+                        if (isset($monthMap[$key])) {
+                            $gamesData[$title][$monthMap[$key]] += (float)$row['Playtime'];
+                        }
+                    }
+
+                    $datasets = [];
+                    $colors = ['#4f46e5', '#059669', '#dc2626', '#d97706', '#db2777', '#0284c7', '#7c3aed', '#14b8a6'];
+                    $c = 0;
+                    foreach ($gamesData as $title => $dataArr) {
+                        $datasets[] = [
+                            'label' => $title,
+                            'data' => $dataArr, // Array is guaranteed to have exactly 12 items
+                            'backgroundColor' => $colors[$c % count($colors)],
+                            'borderRadius' => 4
+                        ];
+                        $c++;
+                    }
+
                     // Trending query to calculate total hours per game
                     $trendingGames = $pdo->query("
                         SELECT g.GameID, g.Title, COALESCE(SUM(l.PlaytimeHours), 0) AS TotalPlaytime
@@ -779,6 +812,20 @@ $msg = $_GET['msg'] ?? '';
                         ORDER BY TotalPlaytime DESC
                         LIMIT 10
                     ")->fetchAll();
+
+                    // Pre-generate sparkline data to prevent inline JS errors
+                    $sparklineChartData = [];
+                    foreach ($trendingGames as $game) {
+                        $base = max(1, $game['TotalPlaytime'] / 7);
+                        $mockData = [];
+                        for ($i=0; $i<15; $i++) {
+                            $mockData[] = max(0, $base + mt_rand(-($base/2), ($base/2)));
+                        }
+                        $sparklineChartData[] = [
+                            'id' => 'chart_' . $game['GameID'],
+                            'data' => $mockData
+                        ];
+                    }
 
                     // Thumbnail shelf
                     $shelf = $pdo->query("
@@ -825,6 +872,21 @@ $msg = $_GET['msg'] ?? '';
                         </div>
                     </div>
 
+                    <!-- ===== PLAYTIME CHART ===== -->
+                    <div class="section-head">
+                        <h2>Playtime by Acquired Month (Last 12 Months)</h2>
+                    </div>
+                    <div class="data-card" style="padding: 24px;">
+                        <?php if (empty($datasets)): ?>
+                            <div class="empty-state">
+                                <i class="bi bi-bar-chart"></i>
+                                <p>No playtime data recorded in the last 12 months.</p>
+                            </div>
+                        <?php else: ?>
+                            <canvas id="playtimeChart" height="80"></canvas>
+                        <?php endif; ?>
+                    </div>
+
                     <!-- ===== STEAMDB STYLE PLAYTIME TRENDS ===== -->
                     <div class="section-head">
                         <h2>Trending by Playtime</h2>
@@ -840,56 +902,13 @@ $msg = $_GET['msg'] ?? '';
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($trendingGames as $game): 
-                                    // Generate simulated chart data based on the total playtime
-                                    $base = max(1, $game['TotalPlaytime'] / 7);
-                                    $mockData = [];
-                                    for ($i=0; $i<15; $i++) {
-                                        $mockData[] = max(0, $base + mt_rand(-($base/2), ($base/2)));
-                                    }
-                                    $canvasId = 'chart_' . $game['GameID'];
-                                ?>
+                                <?php foreach ($trendingGames as $game): ?>
                                 <tr>
                                     <td class="sdb-title"><?= htmlspecialchars($game['Title']) ?></td>
                                     <td>
                                         <div class="sdb-canvas-wrapper">
-                                            <canvas id="<?= $canvasId ?>"></canvas>
+                                            <canvas id="chart_<?= $game['GameID'] ?>"></canvas>
                                         </div>
-                                        <script>
-                                            document.addEventListener("DOMContentLoaded", function() {
-                                                const ctx = document.getElementById('<?= $canvasId ?>').getContext('2d');
-                                                const gradient = ctx.createLinearGradient(0, 0, 0, 40);
-                                                gradient.addColorStop(0, 'rgba(5, 150, 105, 0.25)'); // Matches var(--success)
-                                                gradient.addColorStop(1, 'rgba(5, 150, 105, 0)');
-
-                                                new Chart(ctx, {
-                                                    type: 'line',
-                                                    data: {
-                                                        labels: Array(15).fill(''),
-                                                        datasets: [{
-                                                            data: <?= json_encode($mockData) ?>,
-                                                            borderColor: '#059669', // Matches var(--success)
-                                                            borderWidth: 1.5,
-                                                            backgroundColor: gradient,
-                                                            fill: true,
-                                                            tension: 0.1,
-                                                            pointRadius: 0,
-                                                            pointHoverRadius: 0
-                                                        }]
-                                                    },
-                                                    options: {
-                                                        responsive: true,
-                                                        maintainAspectRatio: false,
-                                                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                                                        layout: { padding: 0 },
-                                                        scales: {
-                                                            x: { display: false },
-                                                            y: { display: false, min: 0 }
-                                                        }
-                                                    }
-                                                });
-                                            });
-                                        </script>
                                     </td>
                                     <td class="sdb-highlight"><?= number_format($game['TotalPlaytime'], 1) ?></td>
                                 </tr>
@@ -897,6 +916,73 @@ $msg = $_GET['msg'] ?? '';
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- SINGLE SCRIPT BLOCK TO RENDER ALL CHARTS SAFELY -->
+                    <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        // 1. Render Bar Chart (only if the canvas exists)
+                        const barCanvas = document.getElementById('playtimeChart');
+                        if (barCanvas) {
+                            const barCtx = barCanvas.getContext('2d');
+                            new Chart(barCtx, {
+                                type: 'bar',
+                                data: {
+                                    labels: <?= json_encode($labels) ?>,
+                                    datasets: <?= json_encode($datasets) ?>
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        legend: { position: 'top', labels: { font: { family: "'Inter', sans-serif", size: 12 } } }
+                                    },
+                                    scales: {
+                                        x: { stacked: true, grid: { display: false } },
+                                        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Total Hours' }, border: { dash: [4, 4] } }
+                                    }
+                                }
+                            });
+                        }
+
+                        // 2. Render Sparklines
+                        const sparklines = <?= json_encode($sparklineChartData) ?>;
+                        sparklines.forEach(function(chart) {
+                            const canvasElement = document.getElementById(chart.id);
+                            if (canvasElement) {
+                                const sparkCtx = canvasElement.getContext('2d');
+                                const gradient = sparkCtx.createLinearGradient(0, 0, 0, 40);
+                                gradient.addColorStop(0, 'rgba(5, 150, 105, 0.25)'); // var(--success)
+                                gradient.addColorStop(1, 'rgba(5, 150, 105, 0)');
+
+                                new Chart(sparkCtx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: Array(15).fill(''),
+                                        datasets: [{
+                                            data: chart.data,
+                                            borderColor: '#059669', // var(--success)
+                                            borderWidth: 1.5,
+                                            backgroundColor: gradient,
+                                            fill: true,
+                                            tension: 0.1,
+                                            pointRadius: 0,
+                                            pointHoverRadius: 0
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                                        layout: { padding: 0 },
+                                        scales: {
+                                            x: { display: false },
+                                            y: { display: false, min: 0 }
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    </script>
 
                     <!-- ===== THUMBNAIL SHELF ===== -->
                     <div class="section-head">
