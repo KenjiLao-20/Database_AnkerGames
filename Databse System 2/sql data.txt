@@ -1,0 +1,122 @@
+-- Use the database
+USE STEAMDB;
+
+-- Publishers
+CREATE TABLE TBPublishers (
+    PublisherID   INT AUTO_INCREMENT PRIMARY KEY,
+    PublisherName VARCHAR(100) NOT NULL,
+    SupportEmail  VARCHAR(100),
+    Country       VARCHAR(50)
+);
+
+-- Users
+CREATE TABLE TBUsers (
+    UserID         INT AUTO_INCREMENT PRIMARY KEY,
+    Username       VARCHAR(50)  NOT NULL,
+    Email          VARCHAR(100) NOT NULL,
+    WalletBalance  DECIMAL(10,2) DEFAULT 0.00,
+    AccountCreated DATE
+);
+
+-- Games
+CREATE TABLE TBGames (
+    GameID            INT AUTO_INCREMENT PRIMARY KEY,
+    PublisherID       INT,
+    Title             VARCHAR(200) NOT NULL,
+    Genre             VARCHAR(50),
+    Price             DECIMAL(10,2),
+    ReleaseDate       DATE,
+    StorageRequirement INT,
+    FOREIGN KEY (PublisherID) REFERENCES TBPublishers(PublisherID)
+);
+
+-- Orders
+CREATE TABLE TBOrders (
+    OrderID       INT AUTO_INCREMENT PRIMARY KEY,
+    UserID        INT,
+    OrderDate     DATE,
+    TotalAmount   DECIMAL(10,2),
+    PaymentMethod VARCHAR(50),
+    FOREIGN KEY (UserID) REFERENCES TBUsers(UserID)
+);
+
+-- Order Details
+CREATE TABLE TBOrderDetails (
+    OrderDetailID INT AUTO_INCREMENT PRIMARY KEY,
+    OrderID       INT,
+    GameID        INT,
+    PricePaid     DECIMAL(10,2),
+    FOREIGN KEY (OrderID) REFERENCES TBOrders(OrderID),
+    FOREIGN KEY (GameID)  REFERENCES TBGames(GameID)
+);
+
+-- Library
+CREATE TABLE TBLibrary (
+    LibraryID     INT AUTO_INCREMENT PRIMARY KEY,
+    UserID        INT,
+    GameID        INT,
+    AcquiredDate  DATE,
+    PlaytimeHours DECIMAL(10,1),
+    FOREIGN KEY (UserID) REFERENCES TBUsers(UserID),
+    FOREIGN KEY (GameID) REFERENCES TBGames(GameID)
+);
+
+-- Sample Data - Publishers
+INSERT INTO TBPublishers (PublisherName, SupportEmail, Country) VALUES
+('Valve', 'valve@gmail.com', 'USA'),
+('EA', 'ea@gmail.com', 'USA'),
+('Rockstar Games', 'rockstar@gmail.com', 'USA'),
+('Ubisoft', 'ubisoft@gmail.com', 'France'),
+('CD Projekt Red', 'cdpr@gmail.com', 'Poland');
+
+-- Sample Data - Users
+INSERT INTO TBUsers (Username, Email, WalletBalance, AccountCreated) VALUES
+('Arwil', 'arwil@gmail.com', 1000.00, '2020-08-05'),
+('Kenji', 'kenji@gmail.com', 500.00, '2018-04-20'),
+('Charles', 'charles@gmail.com', 750.00, '2015-01-12');
+
+-- Sample Data - Games
+INSERT INTO TBGames (PublisherID, Title, Genre, Price, ReleaseDate, StorageRequirement) VALUES
+(1, 'Counter-Strike 2', 'FPS', 0.00, '2023-09-27', 85),
+(1, 'Half-Life: Alyx', 'VR Action', 59.99, '2020-03-23', 67),
+(2, 'EA SPORTS FC 24', 'Sports', 69.99, '2023-09-29', 100),
+(2, 'Apex Legends', 'Battle Royale', 0.00, '2019-02-04', 75),
+(3, 'Grand Theft Auto V', 'Action-Adventure', 29.99, '2013-09-17', 110),
+(3, 'Red Dead Redemption 2', 'Open World', 59.99, '2018-10-26', 150),
+(4, "Assassin's Creed Valhalla", 'Action RPG', 59.99, '2020-11-10', 160),
+(5, 'Cyberpunk 2077', 'Sci-Fi RPG', 59.99, '2020-12-10', 70);
+
+-- Sample Data - Orders
+INSERT INTO TBOrders (UserID, OrderDate, TotalAmount, PaymentMethod) VALUES
+(1, '2026-06-10', 59.99, 'Credit Card'),
+(2, '2026-06-15', 89.98, 'PayPal'),
+(3, '2026-07-01', 29.99, 'Wallet Balance'),
+(1, '2026-07-12', 59.99, 'Gcash'),
+(2, '2026-08-02', 119.98, 'Credit Card');
+
+-- Sample Data - Order Details
+INSERT INTO TBOrderDetails (OrderID, GameID, PricePaid) VALUES
+(1, 2, 59.99),
+(2, 5, 29.99),
+(2, 6, 59.99),
+(3, 5, 29.99),
+(4, 6, 59.99),
+(5, 7, 59.99),
+(5, 8, 59.99);
+
+-- Sample Data - Library
+INSERT INTO TBLibrary (UserID, GameID, AcquiredDate, PlaytimeHours) VALUES
+(1, 1, '2026-06-10', 45.5),
+(2, 2, '2024-01-16', 320.0),
+(3, 3, '2026-06-15', 82.1),
+(1, 4, '2026-06-15', 110.4),
+(3, 5, '2026-07-01', 12.0),
+(2, 6, '2026-07-12', 5.5),
+(2, 7, '2026-08-02', 18.2),
+(1, 8, '2026-08-02', 64.0);
+
+-- Verify everything
+SHOW TABLES;
+SELECT COUNT(*) AS TotalGames FROM TBGames;
+SELECT COUNT(*) AS TotalPublishers FROM TBPublishers;
+SELECT COUNT(*) AS TotalUsers FROM TBUsers;
