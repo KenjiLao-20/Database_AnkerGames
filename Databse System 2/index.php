@@ -421,38 +421,43 @@ $msg = $_GET['msg'] ?? '';
 
         /* ---------- STEAMDB STYLE TREND TABLE ---------- */
         .sdb-card {
-            background: #181a21;
-            border-radius: 8px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            color: #a0a8b6;
+            box-shadow: var(--shadow-sm);
             margin-bottom: 24px;
         }
         .sdb-table {
             width: 100%;
             border-collapse: collapse;
+            margin: 0;
         }
         .sdb-table th {
-            background: #20232c;
-            color: #fff;
-            font-weight: 600;
-            font-size: 12px;
+            background: #f9fafb;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 11.5px;
             text-transform: uppercase;
-            padding: 12px 16px;
+            letter-spacing: 0.06em;
+            padding: 12px 20px;
             text-align: left;
-            border-bottom: 1px solid #2d313d;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
         }
         .sdb-table td {
-            padding: 8px 16px;
-            border-bottom: 1px solid #2d313d;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
             vertical-align: middle;
-            font-size: 14px;
+            font-size: 13.5px;
+            color: var(--text);
         }
         .sdb-table tbody tr:last-child td { border-bottom: none; }
-        .sdb-table tbody tr:hover { background: #20232c; }
-        .sdb-title { color: #fff; font-weight: 500; }
-        .sdb-highlight { color: #a4d007; font-weight: 500; font-size: 14px; text-align: right; }
-        .sdb-canvas-wrapper { width: 120px; height: 40px; }
+        .sdb-table tbody tr { transition: background .1s; }
+        .sdb-table tbody tr:hover { background: #fafbfc; }
+        .sdb-title { font-weight: 500; }
+        .sdb-highlight { color: var(--success); font-weight: 600; text-align: right; }
+        .sdb-canvas-wrapper { width: 120px; height: 40px; margin: 0 auto; }
 
         /* ---------- DATA CARD ---------- */
         .data-card {
@@ -854,8 +859,8 @@ $msg = $_GET['msg'] ?? '';
                                             document.addEventListener("DOMContentLoaded", function() {
                                                 const ctx = document.getElementById('<?= $canvasId ?>').getContext('2d');
                                                 const gradient = ctx.createLinearGradient(0, 0, 0, 40);
-                                                gradient.addColorStop(0, 'rgba(164, 208, 7, 0.4)');
-                                                gradient.addColorStop(1, 'rgba(164, 208, 7, 0)');
+                                                gradient.addColorStop(0, 'rgba(5, 150, 105, 0.25)'); // Matches var(--success)
+                                                gradient.addColorStop(1, 'rgba(5, 150, 105, 0)');
 
                                                 new Chart(ctx, {
                                                     type: 'line',
@@ -863,7 +868,7 @@ $msg = $_GET['msg'] ?? '';
                                                         labels: Array(15).fill(''),
                                                         datasets: [{
                                                             data: <?= json_encode($mockData) ?>,
-                                                            borderColor: '#a4d007',
+                                                            borderColor: '#059669', // Matches var(--success)
                                                             borderWidth: 1.5,
                                                             backgroundColor: gradient,
                                                             fill: true,
