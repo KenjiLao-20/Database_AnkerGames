@@ -51,16 +51,6 @@
 
   <br><hr><br>
 
-  <h2>🔐 Default Login Credentials</h2>
-  <p>Use the following sample account to log in and explore the dashboard:</p>
-  <ul>
-    <li><strong>Username:</strong> <code>hau</code></li>
-    <li><strong>Password:</strong> <code>hau123456789</code></li>
-  </ul>
-  <p><em>(You can also register a new account by clicking "Create one" on the login page).</em></p>
-
-  <br><hr><br>
-
   <h2>📁 File Structure</h2>
   <ul>
     <li><code>config.php</code> - Database connection setup using PDO.</li>
@@ -68,6 +58,5 @@
     <li><code>login.php</code> / <code>register.php</code> / <code>logout.php</code> - Authentication handling.</li>
     <li><code>sql data.txt</code> - The complete database schema and sample data.</li>
   </ul>
-
   <br><hr><br>
 </div>
