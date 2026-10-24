@@ -37,20 +37,7 @@
     <li><a href="https://www.apachefriends.org/index.html">XAMPP</a> (or WAMP/MAMP) installed.</li>
   </ul>
 
-  <h3>Step 1: Setup the Server</h3>
-  <ol>
-    <li>Open the <strong>XAMPP Control Panel</strong>.</li>
-    <li>Start the <strong>Apache</strong> and <strong>MySQL</strong> modules.</li>
-  </ol>
-
-  <h3>Step 2: Clone / Copy the Files</h3>
-  <ol>
-    <li>Download or clone this repository.</li>
-    <li>Move the project folder into your XAMPP <code>htdocs</code> directory.<br>
-    <em>Example path:</em> <code>C:\xampp\htdocs\gamelibrary</code></li>
-  </ol>
-
-  <h3>Step 3: Setup the Database</h3>
+  <h3>Setup the Database</h3>
   <ol>
     <li>Open your browser and go to <a href="http://localhost/phpmyadmin">http://localhost/phpmyadmin</a>.</li>
     <li>Click on the <strong>SQL</strong> tab at the top.</li>
@@ -58,7 +45,7 @@
     <li>Click <strong>Go</strong>. This will automatically create the <code>steamdb</code> database, tables, and populate them with sample analytics data.</li>
   </ol>
 
-  <h3>Step 4: Access the Application</h3>
+  <h3>Access the Application</h3>
   <p>Open your browser and navigate to:<br>
   👉 <strong><code>http://localhost/gamelibrary/login.php</code></strong></p>
 
@@ -83,6 +70,4 @@
   </ul>
 
   <br><hr><br>
-
-  <p><em>Built with ❤️ for managing game libraries.</em></p>
 </div>
