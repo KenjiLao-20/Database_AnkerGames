@@ -813,17 +813,41 @@ $msg = $_GET['msg'] ?? '';
                         LIMIT 10
                     ")->fetchAll();
 
-                    // Pre-generate sparkline data to prevent inline JS errors
+                    // --- Fetch Real Sparkline Data for the last 6 months ---
+                    $sparklineLabels = [];
+                    $sparklineMonthMap = [];
+                    for ($i = 5; $i >= 0; $i--) {
+                        $ts = strtotime("first day of -$i month");
+                        $sparklineLabels[] = date('M Y', $ts);
+                        $sparklineMonthMap[date('Y-m', $ts)] = 5 - $i;
+                    }
+
+                    $sparklineQuery = $pdo->query("
+                        SELECT GameID, DATE_FORMAT(AcquiredDate, '%Y-%m') AS MonthSort, SUM(PlaytimeHours) AS MonthlyPlaytime
+                        FROM TBLibrary
+                        WHERE AcquiredDate >= DATE_FORMAT(DATE_SUB(CURRENT_DATE, INTERVAL 5 MONTH), '%Y-%m-01')
+                        GROUP BY GameID, MonthSort
+                    ")->fetchAll();
+
+                    $sparklineDataMap = [];
+                    foreach ($sparklineQuery as $row) {
+                        $gid = $row['GameID'];
+                        if (!isset($sparklineDataMap[$gid])) {
+                            $sparklineDataMap[$gid] = array_fill(0, 6, 0);
+                        }
+                        if (isset($sparklineMonthMap[$row['MonthSort']])) {
+                            $sparklineDataMap[$gid][$sparklineMonthMap[$row['MonthSort']]] += (float)$row['MonthlyPlaytime'];
+                        }
+                    }
+
                     $sparklineChartData = [];
                     foreach ($trendingGames as $game) {
-                        $base = max(1, $game['TotalPlaytime'] / 7);
-                        $mockData = [];
-                        for ($i=0; $i<15; $i++) {
-                            $mockData[] = max(0, $base + mt_rand(-($base/2), ($base/2)));
-                        }
+                        $gid = $game['GameID'];
+                        $dataArr = $sparklineDataMap[$gid] ?? array_fill(0, 6, 0);
+                        
                         $sparklineChartData[] = [
-                            'id' => 'chart_' . $game['GameID'],
-                            'data' => $mockData
+                            'id' => 'chart_' . $gid,
+                            'data' => $dataArr
                         ];
                     }
 
@@ -897,7 +921,7 @@ $msg = $_GET['msg'] ?? '';
                             <thead>
                                 <tr>
                                     <th>Game Title</th>
-                                    <th style="width: 140px; text-align: center;">Last 7 days</th>
+                                    <th style="width: 140px; text-align: center;">Last 6 months</th>
                                     <th style="width: 120px; text-align: right;">Total Hours</th>
                                 </tr>
                             </thead>
@@ -956,14 +980,14 @@ $msg = $_GET['msg'] ?? '';
                                 new Chart(sparkCtx, {
                                     type: 'line',
                                     data: {
-                                        labels: Array(15).fill(''),
+                                        labels: <?= json_encode($sparklineLabels) ?>, // Use the 6 month labels
                                         datasets: [{
                                             data: chart.data,
                                             borderColor: '#059669', // var(--success)
                                             borderWidth: 1.5,
                                             backgroundColor: gradient,
                                             fill: true,
-                                            tension: 0.1,
+                                            tension: 0.3, // Slightly smoother line
                                             pointRadius: 0,
                                             pointHoverRadius: 0
                                         }]
