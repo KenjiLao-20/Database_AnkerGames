@@ -1,7 +1,17 @@
--- Use the database
-USE STEAMDB;
+-- 1. Create and select the database
+CREATE DATABASE IF NOT EXISTS steamdb;
+USE steamdb;
 
--- Publishers
+-- 2. Drop tables if they exist (to prevent errors if you run this twice)
+DROP TABLE IF EXISTS TBOrderDetails;
+DROP TABLE IF EXISTS TBOrders;
+DROP TABLE IF EXISTS TBLibrary;
+DROP TABLE IF EXISTS TBActivityLog;
+DROP TABLE IF EXISTS TBGames;
+DROP TABLE IF EXISTS TBPublishers;
+DROP TABLE IF EXISTS TBUsers;
+
+-- 3. Create Tables
 CREATE TABLE TBPublishers (
     PublisherID   INT AUTO_INCREMENT PRIMARY KEY,
     PublisherName VARCHAR(100) NOT NULL,
@@ -9,20 +19,22 @@ CREATE TABLE TBPublishers (
     Country       VARCHAR(50)
 );
 
--- Users
 CREATE TABLE TBUsers (
     UserID         INT AUTO_INCREMENT PRIMARY KEY,
     Username       VARCHAR(50)  NOT NULL,
     Email          VARCHAR(100) NOT NULL,
+    Password       VARCHAR(255) NOT NULL,
+    Role           VARCHAR(20) DEFAULT 'user',
     WalletBalance  DECIMAL(10,2) DEFAULT 0.00,
+    CreatedAt      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     AccountCreated DATE
 );
 
--- Games
 CREATE TABLE TBGames (
     GameID            INT AUTO_INCREMENT PRIMARY KEY,
     PublisherID       INT,
     Title             VARCHAR(200) NOT NULL,
+    CoverImage        VARCHAR(500),
     Genre             VARCHAR(50),
     Price             DECIMAL(10,2),
     ReleaseDate       DATE,
@@ -30,7 +42,6 @@ CREATE TABLE TBGames (
     FOREIGN KEY (PublisherID) REFERENCES TBPublishers(PublisherID)
 );
 
--- Orders
 CREATE TABLE TBOrders (
     OrderID       INT AUTO_INCREMENT PRIMARY KEY,
     UserID        INT,
@@ -40,7 +51,6 @@ CREATE TABLE TBOrders (
     FOREIGN KEY (UserID) REFERENCES TBUsers(UserID)
 );
 
--- Order Details
 CREATE TABLE TBOrderDetails (
     OrderDetailID INT AUTO_INCREMENT PRIMARY KEY,
     OrderID       INT,
@@ -50,7 +60,6 @@ CREATE TABLE TBOrderDetails (
     FOREIGN KEY (GameID)  REFERENCES TBGames(GameID)
 );
 
--- Library
 CREATE TABLE TBLibrary (
     LibraryID     INT AUTO_INCREMENT PRIMARY KEY,
     UserID        INT,
@@ -61,7 +70,18 @@ CREATE TABLE TBLibrary (
     FOREIGN KEY (GameID) REFERENCES TBGames(GameID)
 );
 
--- Sample Data - Publishers
+CREATE TABLE TBActivityLog (
+    LogID      INT AUTO_INCREMENT PRIMARY KEY,
+    UserID     INT,
+    Action     VARCHAR(50),
+    EntityType VARCHAR(50),
+    EntityID   INT,
+    Details    VARCHAR(255),
+    CreatedAt  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Insert Sample Data
+-- Note: The password for all sample users below is: password123
 INSERT INTO TBPublishers (PublisherName, SupportEmail, Country) VALUES
 ('Valve', 'valve@gmail.com', 'USA'),
 ('EA', 'ea@gmail.com', 'USA'),
@@ -69,54 +89,64 @@ INSERT INTO TBPublishers (PublisherName, SupportEmail, Country) VALUES
 ('Ubisoft', 'ubisoft@gmail.com', 'France'),
 ('CD Projekt Red', 'cdpr@gmail.com', 'Poland');
 
--- Sample Data - Users
-INSERT INTO TBUsers (Username, Email, WalletBalance, AccountCreated) VALUES
-('Arwil', 'arwil@gmail.com', 1000.00, '2020-08-05'),
-('Kenji', 'kenji@gmail.com', 500.00, '2018-04-20'),
-('Charles', 'charles@gmail.com', 750.00, '2015-01-12');
+INSERT INTO TBUsers (Username, Email, Password, Role, WalletBalance, AccountCreated) VALUES
+('Arwil', 'arwil@gmail.com', '$2y$10$e.w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'admin', 1000.00, '2020-08-05'),
+('Kenji', 'kenji@gmail.com', '$2y$10$e.w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'user', 500.00, '2018-04-20'),
+('Charles', 'charles@gmail.com', '$2y$10$e.w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'user', 750.00, '2015-01-12');
 
--- Sample Data - Games
-INSERT INTO TBGames (PublisherID, Title, Genre, Price, ReleaseDate, StorageRequirement) VALUES
-(1, 'Counter-Strike 2', 'FPS', 0.00, '2023-09-27', 85),
-(1, 'Half-Life: Alyx', 'VR Action', 59.99, '2020-03-23', 67),
-(2, 'EA SPORTS FC 24', 'Sports', 69.99, '2023-09-29', 100),
-(2, 'Apex Legends', 'Battle Royale', 0.00, '2019-02-04', 75),
-(3, 'Grand Theft Auto V', 'Action-Adventure', 29.99, '2013-09-17', 110),
-(3, 'Red Dead Redemption 2', 'Open World', 59.99, '2018-10-26', 150),
-(4, "Assassin's Creed Valhalla", 'Action RPG', 59.99, '2020-11-10', 160),
-(5, 'Cyberpunk 2077', 'Sci-Fi RPG', 59.99, '2020-12-10', 70);
+INSERT INTO TBGames (PublisherID, Title, CoverImage, Genre, Price, ReleaseDate, StorageRequirement) VALUES
+(1, 'Counter-Strike 2', 'https://cdn.cloudflare.steamstatic.com/steam/apps/730/library_600x900.jpg', 'FPS', 0.00, '2023-09-27', 85),
+(1, 'Half-Life: Alyx', 'https://cdn.cloudflare.steamstatic.com/steam/apps/546560/library_600x900.jpg', 'VR Action', 59.99, '2020-03-23', 67),
+(2, 'EA SPORTS FC 24', 'https://cdn.cloudflare.steamstatic.com/steam/apps/2195250/library_600x900.jpg', 'Sports', 69.99, '2023-09-29', 100),
+(2, 'Apex Legends', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/library_600x900.jpg', 'Battle Royale', 0.00, '2019-02-04', 75),
+(3, 'Grand Theft Auto V', 'https://cdn.cloudflare.steamstatic.com/steam/apps/271590/library_600x900.jpg', 'Action-Adventure', 29.99, '2013-09-17', 110),
+(3, 'Red Dead Redemption 2', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/library_600x900.jpg', 'Open World', 59.99, '2018-10-26', 150),
+(4, "Assassin's Creed Valhalla", 'https://cdn.cloudflare.steamstatic.com/steam/apps/2208920/library_600x900.jpg', 'Action RPG', 59.99, '2020-11-10', 160),
+(5, 'Cyberpunk 2077', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/library_600x900.jpg', 'Sci-Fi RPG', 59.99, '2020-12-10', 70);
 
--- Sample Data - Orders
+-- 5. Insert Analytics Data (Spreads across the last 12 months using CURDATE())
 INSERT INTO TBOrders (UserID, OrderDate, TotalAmount, PaymentMethod) VALUES
-(1, '2026-06-10', 59.99, 'Credit Card'),
-(2, '2026-06-15', 89.98, 'PayPal'),
-(3, '2026-07-01', 29.99, 'Wallet Balance'),
-(1, '2026-07-12', 59.99, 'Gcash'),
-(2, '2026-08-02', 119.98, 'Credit Card');
+(1, DATE_SUB(CURDATE(), INTERVAL 11 MONTH), 29.99, 'Credit Card'),
+(2, DATE_SUB(CURDATE(), INTERVAL 10 MONTH), 59.99, 'PayPal'),
+(3, DATE_SUB(CURDATE(), INTERVAL 9 MONTH),  89.98, 'Credit Card'),
+(1, DATE_SUB(CURDATE(), INTERVAL 8 MONTH),  59.99, 'Wallet Balance'),
+(2, DATE_SUB(CURDATE(), INTERVAL 7 MONTH),  59.99, 'Gcash'),
+(3, DATE_SUB(CURDATE(), INTERVAL 6 MONTH),  69.99, 'Credit Card'),
+(1, DATE_SUB(CURDATE(), INTERVAL 5 MONTH),  59.99, 'PayPal'),
+(2, DATE_SUB(CURDATE(), INTERVAL 4 MONTH),  29.99, 'Credit Card'),
+(3, DATE_SUB(CURDATE(), INTERVAL 3 MONTH),  59.99, 'Wallet Balance'),
+(1, DATE_SUB(CURDATE(), INTERVAL 2 MONTH),  59.99, 'Gcash'),
+(2, DATE_SUB(CURDATE(), INTERVAL 1 MONTH),  69.99, 'Credit Card'),
+(3, CURDATE(),                              59.99, 'PayPal');
 
--- Sample Data - Order Details
 INSERT INTO TBOrderDetails (OrderID, GameID, PricePaid) VALUES
-(1, 2, 59.99),
-(2, 5, 29.99),
-(2, 6, 59.99),
-(3, 5, 29.99),
-(4, 6, 59.99),
-(5, 7, 59.99),
-(5, 8, 59.99);
+(1, 5, 29.99), (2, 6, 59.99), (3, 3, 69.99), (3, 1, 0.00), 
+(4, 8, 59.99), (5, 7, 59.99), (6, 3, 69.99), (7, 2, 59.99), 
+(8, 5, 29.99), (9, 4, 0.00), (10, 6, 59.99), (11, 8, 59.99), (12, 7, 59.99);
 
--- Sample Data - Library
 INSERT INTO TBLibrary (UserID, GameID, AcquiredDate, PlaytimeHours) VALUES
-(1, 1, '2026-06-10', 45.5),
-(2, 2, '2024-01-16', 320.0),
-(3, 3, '2026-06-15', 82.1),
-(1, 4, '2026-06-15', 110.4),
-(3, 5, '2026-07-01', 12.0),
-(2, 6, '2026-07-12', 5.5),
-(2, 7, '2026-08-02', 18.2),
-(1, 8, '2026-08-02', 64.0);
-
--- Verify everything
-SHOW TABLES;
-SELECT COUNT(*) AS TotalGames FROM TBGames;
-SELECT COUNT(*) AS TotalPublishers FROM TBPublishers;
-SELECT COUNT(*) AS TotalUsers FROM TBUsers;
+(1, 5, DATE_SUB(CURDATE(), INTERVAL 11 MONTH), 45.0), 
+(2, 8, DATE_SUB(CURDATE(), INTERVAL 11 MONTH), 120.5),
+(2, 6, DATE_SUB(CURDATE(), INTERVAL 10 MONTH), 150.0),
+(3, 1, DATE_SUB(CURDATE(), INTERVAL 10 MONTH), 30.0),
+(3, 3, DATE_SUB(CURDATE(), INTERVAL 9 MONTH), 55.5),
+(1, 1, DATE_SUB(CURDATE(), INTERVAL 9 MONTH), 15.0),
+(1, 8, DATE_SUB(CURDATE(), INTERVAL 8 MONTH), 95.0),
+(2, 4, DATE_SUB(CURDATE(), INTERVAL 8 MONTH), 40.0),
+(2, 7, DATE_SUB(CURDATE(), INTERVAL 7 MONTH), 85.0),
+(3, 2, DATE_SUB(CURDATE(), INTERVAL 7 MONTH), 20.5),
+(3, 3, DATE_SUB(CURDATE(), INTERVAL 6 MONTH), 60.0),
+(1, 4, DATE_SUB(CURDATE(), INTERVAL 6 MONTH), 25.0),
+(1, 2, DATE_SUB(CURDATE(), INTERVAL 5 MONTH), 18.0),
+(2, 5, DATE_SUB(CURDATE(), INTERVAL 5 MONTH), 35.0),
+(2, 5, DATE_SUB(CURDATE(), INTERVAL 4 MONTH), 30.0),
+(3, 6, DATE_SUB(CURDATE(), INTERVAL 4 MONTH), 110.0),
+(3, 4, DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 50.0),
+(1, 3, DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 40.0),
+(2, 6, DATE_SUB(CURDATE(), INTERVAL 2 MONTH), 140.0),
+(1, 7, DATE_SUB(CURDATE(), INTERVAL 2 MONTH), 75.0),
+(3, 8, DATE_SUB(CURDATE(), INTERVAL 1 MONTH), 160.0),
+(1, 1, DATE_SUB(CURDATE(), INTERVAL 1 MONTH), 22.0),
+(3, 7, CURDATE(), 15.0),
+(2, 2, CURDATE(), 45.0),
+(1, 4, CURDATE(), 12.5);
