@@ -2,7 +2,7 @@
 CREATE DATABASE IF NOT EXISTS steamdb;
 USE steamdb;
 
--- 2. Drop tables if they exist (to prevent errors if you run this twice)
+-- 2. Drop tables if they exist (to prevent errors)
 DROP TABLE IF EXISTS TBOrderDetails;
 DROP TABLE IF EXISTS TBOrders;
 DROP TABLE IF EXISTS TBLibrary;
@@ -81,7 +81,7 @@ CREATE TABLE TBActivityLog (
 );
 
 -- 4. Insert Sample Data
--- Note: The password for all sample users below is: password123
+-- Note: Admin account is now username 'hau' with password 'hau123456789'
 INSERT INTO TBPublishers (PublisherName, SupportEmail, Country) VALUES
 ('Valve', 'valve@gmail.com', 'USA'),
 ('EA', 'ea@gmail.com', 'USA'),
@@ -90,9 +90,9 @@ INSERT INTO TBPublishers (PublisherName, SupportEmail, Country) VALUES
 ('CD Projekt Red', 'cdpr@gmail.com', 'Poland');
 
 INSERT INTO TBUsers (Username, Email, Password, Role, WalletBalance, AccountCreated) VALUES
-('Arwil', 'arwil@gmail.com', '$2y$10$e.w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'admin', 1000.00, '2020-08-05'),
-('Kenji', 'kenji@gmail.com', '$2y$10$e.w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'user', 500.00, '2018-04-20'),
-('Charles', 'charles@gmail.com', '$2y$10$e.w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'user', 750.00, '2015-01-12');
+('hau', 'hau@gmail.com', '$2y$10$w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'admin', 1000.00, '2020-08-05'),
+('Kenji', 'kenji@gmail.com', '$2y$10$w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'user', 500.00, '2018-04-20'),
+('Charles', 'charles@gmail.com', '$2y$10$w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'user', 750.00, '2015-01-12');
 
 INSERT INTO TBGames (PublisherID, Title, CoverImage, Genre, Price, ReleaseDate, StorageRequirement) VALUES
 (1, 'Counter-Strike 2', 'https://cdn.cloudflare.steamstatic.com/steam/apps/730/library_600x900.jpg', 'FPS', 0.00, '2023-09-27', 85),
