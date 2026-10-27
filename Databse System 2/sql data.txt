@@ -2,7 +2,7 @@
 CREATE DATABASE IF NOT EXISTS steamdb;
 USE steamdb;
 
--- 2. Drop tables if they exist (to prevent errors)
+-- 2. Drop tables if they exist
 DROP TABLE IF EXISTS TBOrderDetails;
 DROP TABLE IF EXISTS TBOrders;
 DROP TABLE IF EXISTS TBLibrary;
@@ -81,7 +81,6 @@ CREATE TABLE TBActivityLog (
 );
 
 -- 4. Insert Sample Data
--- Note: Admin account is now username 'hau' with password 'hau123456789'
 INSERT INTO TBPublishers (PublisherName, SupportEmail, Country) VALUES
 ('Valve', 'valve@gmail.com', 'USA'),
 ('EA', 'ea@gmail.com', 'USA'),
@@ -94,17 +93,18 @@ INSERT INTO TBUsers (Username, Email, Password, Role, WalletBalance, AccountCrea
 ('Kenji', 'kenji@gmail.com', '$2y$10$w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'user', 500.00, '2018-04-20'),
 ('Charles', 'charles@gmail.com', '$2y$10$w4S.j5O1Y4Gq.Q/5K5O5eZp3XN9XQ4c1S1i0Z9w4r2F4w4e', 'user', 750.00, '2015-01-12');
 
+-- Notice the CoverImage column now points to 'images/...' instead of https://
 INSERT INTO TBGames (PublisherID, Title, CoverImage, Genre, Price, ReleaseDate, StorageRequirement) VALUES
-(1, 'Counter-Strike 2', 'https://cdn.cloudflare.steamstatic.com/steam/apps/730/library_600x900.jpg', 'FPS', 0.00, '2023-09-27', 85),
-(1, 'Half-Life: Alyx', 'https://cdn.cloudflare.steamstatic.com/steam/apps/546560/library_600x900.jpg', 'VR Action', 59.99, '2020-03-23', 67),
-(2, 'EA SPORTS FC 24', 'https://cdn.cloudflare.steamstatic.com/steam/apps/2195250/library_600x900.jpg', 'Sports', 69.99, '2023-09-29', 100),
-(2, 'Apex Legends', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/library_600x900.jpg', 'Battle Royale', 0.00, '2019-02-04', 75),
-(3, 'Grand Theft Auto V', 'https://cdn.cloudflare.steamstatic.com/steam/apps/271590/library_600x900.jpg', 'Action-Adventure', 29.99, '2013-09-17', 110),
-(3, 'Red Dead Redemption 2', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/library_600x900.jpg', 'Open World', 59.99, '2018-10-26', 150),
-(4, "Assassin's Creed Valhalla", 'https://cdn.cloudflare.steamstatic.com/steam/apps/2208920/library_600x900.jpg', 'Action RPG', 59.99, '2020-11-10', 160),
-(5, 'Cyberpunk 2077', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/library_600x900.jpg', 'Sci-Fi RPG', 59.99, '2020-12-10', 70);
+(1, 'Counter-Strike 2', 'images/cs2.png', 'FPS', 0.00, '2023-09-27', 85),
+(1, 'Half-Life: Alyx', 'images/alyx.png', 'VR Action', 59.99, '2020-03-23', 67),
+(2, 'EA SPORTS FC 24', 'images/fc24.png', 'Sports', 69.99, '2023-09-29', 100),
+(2, 'Apex Legends', 'images/apex.png', 'Battle Royale', 0.00, '2019-02-04', 75),
+(3, 'Grand Theft Auto V', 'images/gta5.png', 'Action-Adventure', 29.99, '2013-09-17', 110),
+(3, 'Red Dead Redemption 2', 'images/rdr2.png', 'Open World', 59.99, '2018-10-26', 150),
+(4, "Assassin's Creed Valhalla", 'images/acvalhalla.png', 'Action RPG', 59.99, '2020-11-10', 160),
+(5, 'Cyberpunk 2077', 'images/cyberpunk.png', 'Sci-Fi RPG', 59.99, '2020-12-10', 70);
 
--- 5. Insert Analytics Data (Spreads across the last 12 months using CURDATE())
+-- 5. Insert Analytics Data
 INSERT INTO TBOrders (UserID, OrderDate, TotalAmount, PaymentMethod) VALUES
 (1, DATE_SUB(CURDATE(), INTERVAL 11 MONTH), 29.99, 'Credit Card'),
 (2, DATE_SUB(CURDATE(), INTERVAL 10 MONTH), 59.99, 'PayPal'),
